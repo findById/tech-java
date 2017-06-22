@@ -1,0 +1,85 @@
+group 'org.cn.web'
+version '1.0-SNAPSHOT'
+
+apply plugin: 'java'
+apply plugin: 'maven'
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+tasks.withType(JavaCompile) {
+    options.setEncoding("UTF-8")
+}
+
+tasks.withType(Javadoc) {
+    options.setEncoding("UTF-8")
+}
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+    maven { url 'https://repo.spring.io/libs-milestone' }
+}
+
+// def environment = System.getProperty("env", "dev") // snapshot release
+
+sourceSets {
+    main.java.srcDirs += "src/main/kotlin"
+    // main.resources.srcDirs += "src/main/filters/$environment"
+
+    // test.resources.srcDirs += "src/main/filters/$environment"
+}
+
+install {
+    repositories.mavenInstaller {
+        pom.project {
+            packaging 'jar'
+            name project.name
+            description project.name
+            groupId "$project.group"
+            artifactId project.name
+            version project.version
+        }
+    }
+}
+
+uploadArchives {
+    configuration = configurations.archives
+    repositories.mavenDeployer {
+        repository(url: 'http://192.168.0.100:8081/repository/maven-tech/') {
+            authentication(userName: "tech-admin", password: "123456")
+        }
+        pom.project {
+            url 'http://192.168.0.100:8081/repository/maven-tech/'
+            packaging 'jar'
+            name project.name
+            description project.name
+            groupId "$project.group"
+            artifactId project.name
+            version project.version
+        }
+    }
+}
+
+task sourcesJar(type: Jar, dependsOn: classes) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+    // from sourceSets.main.java.sourceFiles
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier = 'javadoc'
+    from javadoc.destinationDir
+}
+
+artifacts {
+    archives sourcesJar
+    archives javadocJar
+}
+
+dependencies {
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+
+    compile project(':web-core')
+
+}
